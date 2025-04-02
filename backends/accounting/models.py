@@ -1,8 +1,10 @@
 from django.db import models
+# import uuid
 from django.conf import settings
 # from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 # from django.utils import timezone
 class User(models.Model):
+    # uid = models.UUIDField(primary_key=True, auto_created=True, default=uuid.uuid4, editable=False, unique=True)
     username = models.CharField(verbose_name="用户名", help_text="用户名" ,max_length=32, unique=True)
     name = models.CharField(verbose_name="用户昵称", help_text="昵称", max_length=32, blank=True, null=True) #前端可以不写昵称
     birthday = models.CharField(verbose_name="用户生日", help_text="生日", max_length=32, blank=True, null=True) #前端非必填
@@ -10,9 +12,9 @@ class User(models.Model):
         (1, "超级管理员"),
         (2, "普通用户"),
     ]
-    groupid = models.IntegerField(choices=group_choices)
+    groupid = models.IntegerField(choices=group_choices,default=2)
     password = models.CharField(verbose_name="密码", help_text="密码", max_length=64) #需协商加密的处理
-    phone = models.CharField(verbose_name="手机号码", help_text="手机号", max_length=11, unique=True)
+    phone = models.CharField(verbose_name="手机号码", help_text="手机号", max_length=11, blank=True, null=True)
     email = models.EmailField(verbose_name="邮箱", help_text="邮箱", blank=True, null=True)
     reg_time = models.DateTimeField(auto_now_add=True, verbose_name="注册时间", help_text="注册时间")
     last_login_time = models.DateTimeField(auto_now=True, verbose_name="最近登录时间", help_text="最近登录时间")
