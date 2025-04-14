@@ -38,7 +38,7 @@ class Transaction(models.Model): # 交易详情
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, verbose_name="交易名称", help_text="交易名称(去向)") #交易的名称， 允许为空， 即交易去向被删除时不会删除交易记录本身
     amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="交易金额", help_text="交易金额") # 交易金额，最大长度10，小数点后两位精度
     transaction_type = models.IntegerField(choices=TRANSACTION_TYPE_CHOICES, verbose_name="交易类型", help_text="交易类型")# 交易类型，收入or支出
-    description = models.TextField(blank=True, verbose_name="交易详情描述", help_text="交易详情描述") # 交易详情描述
+    description = models.TextField(blank=True, null=True ,verbose_name="交易详情描述", help_text="交易详情描述") # 交易详情描述
     date = models.DateField() #交易日期
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="交易时间", help_text="交易时间") #时间戳，交易具体创建时间
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间", help_text="更新时间")# 每次更新会重新产生时间戳
