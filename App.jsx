@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Dimensions } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import PopupComponent from './madal.jsx'; // 导入PopupComponent组件
 
 const { width, height } = Dimensions.get('window');
 
@@ -121,52 +121,12 @@ const AccountingApp = () => {
         onRequestClose={toggleModal}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { width: width * 1 ,height:height*0.8}]}>
+          <View style={[styles.modalContent, { width: width * 1, height: height * 0.2 }]}>
             <TouchableOpacity style={styles.closeButton} onPress={toggleModal}>
               <Text style={styles.closeButtonText}>×</Text>
             </TouchableOpacity>
-          <View styles={styles.modalall}>
-            <View style={styles.modal}>
-            <TouchableOpacity><View style={styles.modaltop}>
-              <Text style={styles.modalTitle}>支出</Text>
-              </View>
-              </TouchableOpacity>
-              <TouchableOpacity><View style={styles.modaltop}>
-                <Text style={styles.modalTitle}>收入</Text>
-                </View>
-              </TouchableOpacity></View>
-              <View style={styles.modaloo}>
-                
-                <View style={styles.modalp}>
-                <TouchableOpacity><View style={styles.modalpp}>
-                  <Text style={styles.modaloption}>餐饮</Text>
-                  </View>
-                  </TouchableOpacity>
-                  <TouchableOpacity><View style={styles.modalpp}>
-                    <Text style={styles.modaloption}>交通</Text>
-                    </View>
-                  </TouchableOpacity>
-                  <TouchableOpacity><View style={styles.modalpp}>
-                    <Text style={styles.modaloption}>娱乐</Text>
-                    </View>
-                  </TouchableOpacity>
-                  <TouchableOpacity><View style={styles.modalpp}>
-                    <Text style={styles.modaloption}>购物</Text>
-                    </View>
-                  </TouchableOpacity>
-                  <TouchableOpacity><View style={styles.modalpp}>
-                    <Text style={styles.modaloption}>医疗</Text>
-                    </View>
-                  </TouchableOpacity>
-                  <TouchableOpacity><View style={styles.modalpp}>
-                    <Text style={styles.modaloption}>自定义</Text>
-                    </View>
-                  </TouchableOpacity>
-                </View>
-                </View>
-              
-            </View> 
-            </View> 
+            <PopupComponent onClose={toggleModal} />
+          </View>
         </View>
       </Modal>
     </View>
@@ -289,9 +249,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  plusfont: {
-    // Style for the text below plus button
-  },
+ 
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -329,46 +287,7 @@ const styles = StyleSheet.create({
     alignItems:'flex-start',
     flex:2,
   },
-  modaltop:{
-    width:width*0.2,
-    height:height*0.03,
-    backgroundColor:'#f5f5f5',
-    justifyContent:'center',
-    alignItems:'center',
-    borderRadius: 12,
-    padding: 0.5,
-  },
-  modaloo:{
-    flex:8,
-    flexDirection:'row',
-    alignItems:'flex-start',
-    backgroundColor:'white',
-    padding: 0.5,
-  },
-  modalp:{
-    flexDirection:'row',
-    backgroundColor:'white',
-    padding: 0.5,
-    flexWrap:'wrap',
-    justifyContent:'space-between',
-    flex:1,
 
-  },
-  modaloption:{
-    height:height*0.03,
-    width:width*0.25,
-    backgroundColor:'#f5f5f5',
-    textAlign:'center',
-    borderRadius: 12,
-   
-  },
-  modalpp:{
-    backgroundColor:'white',
-    justifyContent:'space-between',
-    
-    
-   
-  }
 });
 
 export default AccountingApp;
