@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Dimensions } from 'react-native';
-import PopupComponent from './madal.jsx'; // 导入PopupComponent组件
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import PopupComponent from './madal.jsx';
 
 const { width, height } = Dimensions.get('window');
 
 const AccountingApp = () => {
-  const [isModalVisible, setModalVisible] = useState(false);
-  
+  const [isPopupVisible, setPopupVisible] = useState(false);
 
-  const toggleModal = () => {
-    setModalVisible(!isModalVisible);
+  const togglePopup = () => {
+    setPopupVisible(!isPopupVisible);
   };
 
   return (
@@ -93,7 +92,7 @@ const AccountingApp = () => {
           <Text style={styles.tabText}>报表</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.tabItem} onPress={toggleModal}>
+        <TouchableOpacity style={styles.tabItem} onPress={togglePopup}>
           <View style={styles.bottomionicon}>
             <View style={styles.bottomplus}>
               <Text style={styles.plus}>+</Text>
@@ -112,23 +111,12 @@ const AccountingApp = () => {
           <Text style={styles.tabText}>我的</Text>
         </TouchableOpacity>
       </View>
-
-      {/* Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isModalVisible}
-        onRequestClose={toggleModal}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { width: width * 1, height: height * 0.2 }]}>
-            <TouchableOpacity style={styles.closeButton} onPress={toggleModal}>
-              <Text style={styles.closeButtonText}>×</Text>
-            </TouchableOpacity>
-            <PopupComponent onClose={toggleModal} />
-          </View>
-        </View>
-      </Modal>
+      
+      {/* Popup Component */}
+      <PopupComponent 
+        visible={isPopupVisible} 
+        onClose={togglePopup} 
+      />
     </View>
   );
 };
@@ -249,7 +237,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
- 
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -278,7 +265,6 @@ const styles = StyleSheet.create({
   modalall:{
    flexDirection:'column', 
   },
-  
   modal:{
     width:width*0.9,
     height:height*0.1,
@@ -287,7 +273,6 @@ const styles = StyleSheet.create({
     alignItems:'flex-start',
     flex:2,
   },
-
 });
 
 export default AccountingApp;
