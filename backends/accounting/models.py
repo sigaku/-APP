@@ -5,7 +5,7 @@ from django.conf import settings
 # from django.utils import timezone
 class User(models.Model):
     # uid = models.UUIDField(primary_key=True, auto_created=True, default=uuid.uuid4, editable=False, unique=True)
-    username = models.CharField(verbose_name="用户名", help_text="用户名" ,max_length=32, unique=True)
+    username = models.CharField(verbose_name="用户名", help_text="用户名" ,max_length=32, blank=True, null=True)
     name = models.CharField(verbose_name="用户昵称", help_text="昵称", max_length=32, blank=True, null=True) #前端可以不写昵称
     birthday = models.CharField(verbose_name="用户生日", help_text="生日", max_length=32, blank=True, null=True) #前端非必填
     group_choices = [
@@ -34,12 +34,12 @@ class Transaction(models.Model): # 交易详情
         (1, 'Income'),
         (2, 'Expense'),
     ]
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="用户", help_text="用户") #关联到用户
+    username = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="用户", help_text="用户") #关联到用户
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, verbose_name="交易名称", help_text="交易名称(去向)") #交易的名称， 允许为空， 即交易去向被删除时不会删除交易记录本身
     amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="交易金额", help_text="交易金额") # 交易金额，最大长度10，小数点后两位精度
     transaction_type = models.IntegerField(choices=TRANSACTION_TYPE_CHOICES, verbose_name="交易类型", help_text="交易类型")# 交易类型，收入or支出
     description = models.TextField(blank=True, null=True ,verbose_name="交易详情描述", help_text="交易详情描述") # 交易详情描述
-    date = models.DateField() #交易日期
+    date = models.DateField(verbose_name="交易日期", help_text="交易日期") #交易日期
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="交易时间", help_text="交易时间") #时间戳，交易具体创建时间
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间", help_text="更新时间")# 每次更新会重新产生时间戳
     def __str__(self):

@@ -14,35 +14,37 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     )
     class Meta:
         model = User
-        fields = ['username', 'password', 'email']  # 需要前端提交的字段
+        fields = ['phone','password', 'email']  # 需要前端提交的字段
         extra_kwargs = {
             "id":{'read_only':True},
             'password': {'write_only': True},  # 确保密码不会序列化输出
-            'email': {'required': True}       # 强制邮箱必填
+            'email': {'required': True},       # 强制邮箱必填
+            'phone': {'required': True}
         }
     def create(self, validated_data):
         # 创建用户时自动加密密码
         user = User.objects.create(
-            username=validated_data['username'],
+            phone=validated_data['phone'],
             password=md5(validated_data['password']),
             email=validated_data['email']
         )
         return user
 
 class UserLoginSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(
+    email = serializers.EmailField(
         required=True
     )
     password = serializers.CharField(
-        write_only=True,  # 密码不返回给前端
+        # write_only=True,  # 密码不返回给前端
         required=True,
     )
     class Meta:
         model = User
-        fields = ['username', 'password']  # 需要前端提交的字段
+        fields = ['email', 'password']  # 需要前端提交的字段
         extra_kwargs = {
             "id":{'read_only':True},
             'password': {'write_only': True},  # 确保密码不会序列化输出
+            'email':{'required': True}
         }
 
 # class CategorySerializer(serializers.ModelSerializer):
@@ -55,7 +57,7 @@ class UserLoginSerializer(serializers.ModelSerializer):
 
 class TransactionSerializer(serializers.ModelSerializer):
     # 通过用户名关联用户（前端传递用户名，后端自动转换为 User 对象）
-    user = serializers.SlugRelatedField(
+    username = serializers.SlugRelatedField(
         slug_field='username',
         queryset=User.objects.all()
     )
@@ -67,10 +69,10 @@ class TransactionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Transaction
-        fields = ['user', 'amount', 'date', 'category']
+        fields = ['username','amount', 'date', 'category']
 
 class TransactionGetSerializer(serializers.ModelSerializer):
-    user = serializers.SlugRelatedField(
+    username = serializers.SlugRelatedField(
         slug_field='username',  # 使用 User 模型的 username 字段
         read_only=True  # 仅用于序列化输出（前端无需输入）
     )
@@ -83,3 +85,4 @@ class TransactionGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = '__all__'  # 包含所有需要返回的字段
+
