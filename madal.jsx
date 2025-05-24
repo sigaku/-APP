@@ -6,24 +6,37 @@ import {
   StyleSheet,
   Modal,
   FlatList,
+  Dimensions,
+  Image,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 
+// 导入图片资源
+import lifeImage from '../app.UI/life.png';
+import invastImage from '../app.UI/invast.png';
+import transportImage from '../app.UI/transport.png';
+import foodImage from '../app.UI/food.png';
+import entertainmentImage from '../app.UI/entertainment.png';
+
 const Categories = [
-  { id: 1, name: '生活日用' },
-  { id: 2, name: '转账' },
-  { id: 3, name: '消费' },
-  { id: 4, name: '餐饮' },
-  { id: 5, name: '娱乐' },
+  { id: 1, name: '生活', image: lifeImage },
+  { id: 2, name: '购物', image: invastImage },
+  { id: 3, name: '出行', image: transportImage },
+  { id: 4, name: '餐饮', image: foodImage },
+  { id: 5, name: '娱乐', image: entertainmentImage },
 ];
 
 const NUMBER_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '完成', '0', '删除'];
 
-const PopupComponent = ({ visible, onClose }) => {
+const PopupComponent = ({ visible, onClose, onAmountEntered, onDataSent }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [numberKeyboardVisible, setNumberKeyboardVisible] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [category, setCategory] = useState(null);
+  const [date, setDate] = useState(new Date());
   const [amount, setAmount] = useState('');
+  const [isSending, setIsSending] = useState(false); // 新增状态
+  const [username, setUsername] = useState('12346'); // 新增状态，固定为 '12346'
 
   useEffect(() => {
     setModalVisible(visible);
@@ -31,13 +44,12 @@ const PopupComponent = ({ visible, onClose }) => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentTime(new Date());
+      setDate(new Date());
     }, 1000);
 
     return () => clearInterval(interval);
   }, []);
 
-  // 格式化时间为 "YYYY-MM-DD HH:mm" 格式
   const formatTime = (date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -56,7 +68,7 @@ const PopupComponent = ({ visible, onClose }) => {
   };
 
   const handleCategorySelection = (category) => {
-    setSelectedCategory(category);
+    setCategory(category);
     setModalVisible(false);
     onClose && onClose();
   };
@@ -65,9 +77,62 @@ const PopupComponent = ({ visible, onClose }) => {
     if (number === '删除') {
       setAmount((prevAmount) => prevAmount.slice(0, -1));
     } else if (number === '完成') {
+      if (onAmountEntered) {
+        onAmountEntered(amount);
+      }
       closeNumberKeyboard();
     } else {
+      // 只允许数字和小数点
+      if (number === '.' && amount.includes('.')) return;
+      if (!/^\d*\.?\d*$/.test(number)) return;
       setAmount((prevAmount) => prevAmount + number);
+    }
+  };
+
+  const handleSubmit = async () => {
+    // 检查是否选择了分类和输入了金额
+    if (!category) {
+      Alert.alert('错误', '请选择一个分类');
+      return;
+    }
+    if (!amount) {
+      Alert.alert('错误', '请输入金额');
+      return;
+    }
+
+    const data = {
+      amount: parseFloat(amount),
+      category: category.name,
+      timestamp: date.toISOString(),
+      username: username, // 添加 username 到数据中
+    };
+
+    setIsSending(true); // 开始发送
+
+    try {
+      const response = await fetch(' https://0e74-223-104-194-124.ngrok-free.app/api/transaction/create/', { // 确保 URL 正确
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer YOUR_JWT_TOKEN`, // 如果需要认证
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || '网络响应不是OK');
+      }
+
+      const responseData = await response.json();
+      Alert.alert('成功', '数据已成功发送');
+      console.log(responseData);
+      onDataSent && onDataSent(responseData);
+    } catch (error) {
+      Alert.alert('错误', '发送数据时出错');
+      console.error(error);
+    } finally {
+      setIsSending(false); // 发送完成
     }
   };
 
@@ -75,23 +140,38 @@ const PopupComponent = ({ visible, onClose }) => {
     <View style={styles.modalContent}>
       <View style={styles.header}>
         <View style={styles.headerTextView}>
-          <TouchableOpacity onPress={showNumberKeyboard}>
+          <TouchableOpacity onPress={showNumberKeyboard} accessibilityLabel="输入金额" accessibilityHint="点击以输入金额">
             <Text style={styles.headerText}>￥{amount || '请输入金额'}</Text>
           </TouchableOpacity>
         </View>
-        <Text style={styles.date}>{formatTime(currentTime)}</Text>
+        <Text style={styles.date}>{formatTime(date)}</Text>
       </View>
       <FlatList
         data={Categories}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => handleCategorySelection(item)}>
-            <View style={styles.categoryItem}>
+          <TouchableOpacity
+            onPress={() => handleCategorySelection(item)}
+            style={styles.categoryItem}
+            accessibilityLabel={`选择分类 ${item.name}`}
+            accessibilityHint="点击以选择该分类"
+          >
+            <View style={styles.categoryContent}>
+              <Image source={item.image} style={styles.categoryImage} />
               <Text style={styles.categoryText}>{item.name}</Text>
             </View>
           </TouchableOpacity>
         )}
       />
+      {/* 新增的完成按钮 */}
+      <TouchableOpacity
+        onPress={handleSubmit}
+        style={styles.completeButton}
+        accessibilityLabel="完成"
+        accessibilityHint="点击以完成并发送数据"
+      >
+        <Text style={styles.completeButtonText}>完成</Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -101,17 +181,21 @@ const PopupComponent = ({ visible, onClose }) => {
       transparent={true}
       visible={numberKeyboardVisible}
       onRequestClose={closeNumberKeyboard}
+      accessibilityLabel="数字键盘"
+      accessibilityHint="用于输入金额的数字键盘"
     >
       <View style={styles.numberKeyboardModalBackground}>
         <View style={styles.numberKeyboardContent}>
           <FlatList
             data={NUMBER_KEYS}
             keyExtractor={(item, index) => index.toString()}
-            numColumns={3}
+            numColumns="3"
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={styles.numberKey}
                 onPress={() => handleNumberPress(item)}
+                accessibilityLabel={item === '删除' ? '删除' : item === '完成' ? '完成' : item}
+                accessibilityHint={item === '删除' ? '点击以删除最后一个字符' : item === '完成' ? '点击以完成输入' : `点击以输入 ${item}`}
               >
                 <Text style={styles.numberKeyText}>
                   {item === '删除' ? '⌫' : item === '完成' ? '完成' : item}
@@ -133,10 +217,18 @@ const PopupComponent = ({ visible, onClose }) => {
         setModalVisible(false);
         onClose && onClose();
       }}
+      accessibilityLabel="分类选择"
+      accessibilityHint="用于选择分类的模态框"
     >
       <View style={styles.modalBackground} />
       {renderModalContent()}
       {renderNumberKeyboard()}
+      {isSending && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#0000ff" />
+          <Text style={styles.loadingText}>发送中...</Text>
+        </View>
+      )}
     </Modal>
   );
 };
@@ -187,9 +279,32 @@ const styles = StyleSheet.create({
     padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  categoryContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  categoryImage: {
+    width: 30,
+    height: 30,
+    marginRight: 15,
   },
   categoryText: {
     fontSize: 16,
+  },
+  completeButton: {
+    marginTop: 20,
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  completeButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   numberKeyboardModalBackground: {
     ...StyleSheet.absoluteFillObject,
@@ -214,6 +329,21 @@ const styles = StyleSheet.create({
   numberKeyText: {
     fontSize: 20,
     fontWeight: 'bold',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#fff',
+    fontSize: 18,
   },
 });
 
