@@ -1,90 +1,92 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
+// MainPage.js
 
-const ProfileScreen = () => {
-  // 定义表单状态
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
+import { Button, } from 'react-native-elements';
 
-  // 提交表单时的处理函数
-  const handleSubmit = () => {
-    if (!name || !email || !phone) {
-      Alert.alert('错误', '请填写所有必填项');
-      return;
-    }
-
-    // 这里可以添加将数据发送到服务器的逻辑
-    Alert.alert('成功', '个人信息已更新');
-    console.log('提交的个人信息:', { name, email, phone });
-  };
-
+const MainPage = ({ navigation }) => {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>个人信息</Text>
-
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>姓名</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="请输入姓名"
-          value={name}
-          onChangeText={setName}
-        />
+    <ImageBackground
+      source={require('../Images/124.jpeg')} // 请确保在项目中有一个合适的背景图片
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <View style={styles.container}>
+        <Text style={styles.title}>记账不仅是一种行为，更是一种对生活的态度</Text>
+        <View style={styles.buttonGroup}>
+          <Button
+            title="登录"
+            buttonStyle={styles.loginButton}
+            titleStyle={styles.buttonTitle}
+            onPress={() => navigation.navigate('Login')}
+            
+            
+          />
+          <Button
+            title="注册"
+            buttonStyle={styles.registerButton}
+            titleStyle={styles.buttonTitle}
+            onPress={() => navigation.navigate('Register')}
+           
+            
+          />
+        </View>
       </View>
-
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>邮箱</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="请输入邮箱"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-        />
-      </View>
-
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>电话</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="请输入电话"
-          value={phone}
-          onChangeText={setPhone}
-          keyboardType="phone-pad"
-        />
-      </View>
-
-      <Button title="保存" onPress={handleSubmit} />
-    </View>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    
+    padding: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 36,
     fontWeight: 'bold',
-    marginBottom: 24,
+    color: '#fff',
+    marginBottom: 50,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 4,
   },
-  formGroup: {
-    marginBottom: 16,
+  buttonGroup: {
+    width: '100%',
   },
-  label: {
-    fontSize: 16,
-    marginBottom: 8,
+  loginButton: {
+    backgroundColor: '#4CAF50',
+    borderRadius: 30,
+    paddingVertical: 15,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 8,
-    borderRadius: 4,
-    fontSize: 16,
+  registerButton: {
+    backgroundColor: '#008CBA',
+    borderRadius: 30,
+    paddingVertical: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  buttonTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  iconContainer: {
+    marginRight: 10,
   },
 });
 
-export default ProfileScreen;
+export default MainPage;
