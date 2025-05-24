@@ -1,335 +1,237 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, FlatList, Alert, ActivityIndicator } from 'react-native';
-import moment from 'moment';
-import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, FlatList } from 'react-native';
+import { PieChart } from 'react-native-chart-kit';
+import { Dimensions } from 'react-native';
 
-// 日期显示组件
-const DateDisplay = ({ date, style }) => {
-  const formattedDate = moment(date).format('YYYY年MM月DD日');
-  return (
-    <View style={[styles.dateContainer, style]}>
-      <Text style={styles.dateText}>{formattedDate}—————————————————————————</Text>
-    </View>
-  );
-};
+const screenWidth = Dimensions.get('window').width;
 
+const API_URL = ' https://0e74-223-104-194-124.ngrok-free.app/api/stats/'; // 替换为你的API端点
 
-
-const TimeDisplay = () => {
-  const navigation = useNavigation();
-  const [time, setTime] = useState(new Date());
-
-  useEffect(() => {
-    const timerID = setInterval(() => {
-      setTime(new Date());
-    }, 1000); // 每秒更新一次
-
-    return () => {
-      clearInterval(timerID);
-    };
-  }, []);
-
-  useEffect(() => {
-    // 打印 navigation 的值
-    console.log(navigation);
-  }, [navigation]); // 依赖于 navigation，确保每次 navigation 变化时都会打印
-
-  const monthMap = {
-    1: '一月',
-    2: '二月',
-    3: '三月',
-    4: '四月',
-    5: '五月',
-    6: '六月',
-    7: '七月',
-    8: '八月',
-    9: '九月',
-    10: '十月',
-    11: '十一月',
-    12: '十二月',
-  };
-
-  const now = time;
-  const month = now.getMonth() + 1;
-  const day = now.getDate();
-  const hours = now.getHours();
-  let message = '';
-
-  if (hours < 12) {
-    message = '上午好！';
-  } else if (hours < 18) {
-    message = '下午好！';
-  } else if (hours >= 18 && hours < 23) {
-    message = '晚上好！';
-  } else {
-    message = '早点休息~';
-  }
-
-  return (
-    <View style={styles.timeContainer}>
-      <View style={styles.dateContainer}>
-        <Text style={styles.text}>{`${day}`}</Text>
-        <Text style={styles.text1}>{`${monthMap[month]}`}</Text>
-      </View>
-
-      <View style={styles.separator}></View>
-
-      <View style={styles.greetingContainer}>
-        <Text style={styles.text2}>{message}</Text>
-      </View>
-      <TouchableOpacity
-        onPress={() => {
-          if (navigation) {
-            navigation.navigate('Profile');
-          } else {
-            Alert.alert('错误', '导航功能不可用');
-          }
-        }}
-      >
-        <Image
-          style={styles.circleImage}
-          source={require('../Images/122.jpg')}
-          resizeMode="cover"
-        />
-      </TouchableOpacity>
-    </View>
-  );
-};
-
-// 主组件
-const HomeScreen = ({ navigation }) => {
-  const [newsList, setNewsList] = useState([]);
-  const [page, setPage] = useState(1); // 当前页数
-  const [isLoading, setIsLoading] = useState(false);
+const FinanceOverview = () => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const flatListRef = useRef(null);
-
-
-
-  const fetchNewsData = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const today = moment().format('YYYYMMDD');
-      const yesterday = moment().subtract(1, 'days').format('YYYYMMDD');
-      const yesYesterday = moment().subtract(2, 'days').format('YYYYMMDD');
-
-      // 获取今天的新闻
-      const todayResponse = await fetch(`http://news-at.zhihu.com/api/3/stories/latest`);
-      if (!todayResponse.ok) {
-        throw new Error(`HTTP error! status: ${todayResponse.status}`);
-      }
-      const todayData = await todayResponse.json();
-      setNewsList(todayData.stories);
-
-      // 获取昨天的新闻
-      const yesterdayResponse = await fetch(`https://news-at.zhihu.com/api/3/news/before/${yesterday}`);
-      if (!yesterdayResponse.ok) {
-        throw new Error(`HTTP error! status: ${yesterdayResponse.status}`);
-      }
-      const yesterdayData = await yesterdayResponse.json();
-      setNewsList(prevNews => [...prevNews, ...yesterdayData.stories]);
-
-      // 获取前天的新闻
-      const yesYesterdayResponse = await fetch(`https://news-at.zhihu.com/api/3/news/before/${yesYesterday}`);
-      if (!yesYesterdayResponse.ok) {
-        throw new Error(`HTTP error! status: ${yesYesterdayResponse.status}`);
-      }
-      const yesYesterdayData = await yesYesterdayResponse.json();
-      setNewsList(prevNews => [...prevNews, ...yesYesterdayData.stories]);
-    } catch (err) {
-      setError(err.message);
-      Alert.alert('错误', '获取新闻数据失败');
-      console.error('获取新闻数据失败:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
 
   useEffect(() => {
-    fetchNewsData();
-  }, [fetchNewsData]);
+    fetchData();
+  }, []);
 
-  const loadMoreNews = useCallback(async () => {
-    if (isLoading) return;
-    setIsLoading(true);
+  const fetchData = async () => {
     try {
-      const date = moment().subtract(page + 2, 'days').format('YYYYMMDD');
-      const response = await fetch(`https://news-at.zhihu.com/api/3/news/before/${date}`);
+      const response = await fetch(API_URL);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data = await response.json();
-      setNewsList(prevNews => [...prevNews, ...data.stories]);
-      setPage(prevPage => prevPage + 1);
+      const result = await response.json();
+      setData(result);
     } catch (err) {
       setError(err.message);
-      Alert.alert('错误', '加载更多新闻失败');
-      console.error('加载更多新闻失败:', err);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [isLoading, page]);
-
-  const handleLoadMore = useCallback(() => {
-    loadMoreNews();
-  }, [loadMoreNews]);
-
-  const renderFooter = () => {
-    if (!isLoading) return null;
-    return (
-      <View style={styles.footer}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    );
   };
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.errorText}>Error: {error}</Text>
+      </SafeAreaView>
+    );
+  }
+
+  // 提取所需的数据
+  const {
+    monthly_income,
+    monthly_expense,
+    today_income,
+    today_expense,
+    daily_income_avg,
+    daily_expense_avg,
+    monthly_balance,
+    expense_ratio,
+  } = data;
+
+  // 准备饼状图的数据
+  const chartData = [
+    {
+      name: 'Food',
+      population: expense_ratio.expense_ratio_food,
+      color: '#F00',
+      legendFontColor: '#7F7F7F',
+      legendFontSize: 15,
+    },
+    {
+      name: 'Transport',
+      population: expense_ratio.expense_ratio_transport,
+      color: '#0F0',
+      legendFontColor: '#7F7F7F',
+      legendFontSize: 15,
+    },
+    {
+      name: 'Life',
+      population: expense_ratio.expense_ratio_life,
+      color: '#00F',
+      legendFontColor: '#7F7F7F',
+      legendFontSize: 15,
+    },
+    {
+      name: 'Shopping',
+      population: expense_ratio.expense_ratio_shopping,
+      color: '#FF0',
+      legendFontColor: '#7F7F7F',
+      legendFontSize: 15,
+    },
+    {
+      name: 'Entertainment',
+      population: expense_ratio.expense_ratio_entertainment,
+      color: '#0FF',
+      legendFontColor: '#7F7F7F',
+      legendFontSize: 15,
+    },
+  ];
+
+  const chartConfig = {
+    backgroundGradientFrom: '#1E2923',
+    backgroundGradientFromOpacity: 0,
+    backgroundGradientTo: '#08130D',
+    backgroundGradientToOpacity: 0.5,
+    color: (opacity = 1) => `rgba(26, 255, 146, ${opacity})`,
+    strokeWidth: 2, // optional, default 3
+    barPercentage: 0.5,
+    useShadowColorFromDataset: false, // optional
+  };
+
+  // 竖直排列的支出比例数据
+  const verticalExpenseData = [
+    { name: 'Food', ratio: expense_ratio.expense_ratio_food },
+    { name: 'Transport', ratio: expense_ratio.expense_ratio_transport },
+    { name: 'Life', ratio: expense_ratio.expense_ratio_life },
+    { name: 'Shopping', ratio: expense_ratio.expense_ratio_shopping },
+    { name: 'Entertainment', ratio: expense_ratio.expense_ratio_entertainment },
+  ];
+
   return (
-    <View style={styles.container}>
-      <TimeDisplay />
-      <DateDisplay/>
-      <FlatList
-        ref={flatListRef}
-        data={newsList}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.newsview}
-            onPress={() => navigation.navigate('Detail', { item })}
-          >
-            <View style={styles.newstext}>
-              <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
-              <Text style={styles.hint}>{item.hint}</Text>
-            </View>
-            <View style={styles.newsimageview}>
-              {item.images && item.images.length > 0 ? (
-                <Image
-                  source={{ uri: item.images[0] }}
-                  style={styles.newsImage}
-                  resizeMode="cover"
-                  onError={(error) => {
-                    console.error('Failed to load image:', error);
-                  }}
-                />
-              ) : (
-                <Image
-                  source={require('../Images/123.jpg')}
-                  style={styles.newsImage}
-                  resizeMode="cover"
-                />
-              )}
-            </View>
-          </TouchableOpacity>
-        )}
-        keyExtractor={(item, index) => index.toString()}
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={renderFooter}
-      />
-      {error && <Text style={styles.errorText}>错误: {error}</Text>}
-    </View>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.section}>
+        <Text style={styles.title}>Monthly Overview</Text>
+        <View style={styles.row}>
+          <View style={styles.item}>
+            <Text style={styles.label}>Income</Text>
+            <Text style={styles.value}>+{monthly_income}</Text>
+          </View>
+          <View style={styles.item}>
+            <Text style={styles.label}>Expense</Text>
+            <Text style={styles.value}>-{monthly_expense}</Text>
+          </View>
+        </View>
+        <View style={styles.row}>
+          <View style={styles.item}>
+            <Text style={styles.label}>Balance</Text>
+            <Text style={styles.value}>{monthly_balance}</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.title}>Today Overview</Text>
+        <View style={styles.row}>
+          <View style={styles.item}>
+            <Text style={styles.label}>Income</Text>
+            <Text style={styles.value}>+{today_income}</Text>
+          </View>
+          <View style={styles.item}>
+            <Text style={styles.label}>Expense</Text>
+            <Text style={styles.value}>-{today_expense}</Text>
+          </View>
+        </View>
+        <View style={styles.row}>
+          <View style={styles.item}>
+            <Text style={styles.label}>Daily Income Avg</Text>
+            <Text style={styles.value}>+{daily_income_avg}</Text>
+          </View>
+          <View style={styles.item}>
+            <Text style={styles.label}>Daily Expense Avg</Text>
+            <Text style={styles.value}>-{daily_expense_avg}</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.title}>Expense Ratio</Text>
+        <PieChart
+          data={chartData}
+          width={screenWidth}
+          height={220}
+          chartConfig={chartConfig}
+          accessor="population"
+          backgroundColor="transparent"
+          paddingLeft="15"
+          absolute
+        />
+        <View style={styles.legend}>
+          <FlatList
+            data={verticalExpenseData}
+            keyExtractor={(item) => item.name}
+            renderItem={({ item }) => (
+              <View style={styles.legendItem}>
+                <View style={{ backgroundColor: chartData.find((c) => c.name === item.name)?.color, width: 12, height: 12, marginRight: 8 }} />
+                <Text>{item.name}</Text>
+                <Text>  {`${(item.ratio * 100).toFixed(2)}%`}</Text>
+              </View>
+            )}
+          />
+        </View>
+      </View>
+    </SafeAreaView>
   );
 };
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: '#F5F5F5',
-      paddingTop: 10,
-    },
-    timeContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      width: '100%',
-      paddingHorizontal: 20,
-      paddingVertical: 10,
-      backgroundColor: '#FFFFFF',
-      borderRadius: 5,
-      elevation: 2,
-      marginBottom: 10,
-    },
-    dateContainer: {
-      flexDirection: 'column',
-      alignItems: 'center',
-    },
-    text: {
-      fontSize: 30,
-      color: '#000000',
-    },
-    text1: {
-      fontSize: 20,
-      color: '#000000',
-    },
-    text2: {
-      fontSize: 40,
-      color: '#000000',
-      fontWeight: 'bold',
-      textAlign: 'center',
-    },
-    circleImage: {
-      width: 54,
-      height: 54,
-      borderRadius: 27,
-    },
-    newsListContainer: {
-      flex: 1,
-      width: '100%',
-      padding: 10,
-    },
-    listContainer: {
-      flex: 1,
-    },
-    loadingText: {
-      textAlign: 'center',
-      marginTop: 10,
-      fontSize: 16,
-      color: '#555',
-    },
-    errorText: {
-      textAlign: 'center',
-      marginTop: 10,
-      fontSize: 16,
-      color: 'red',
-    },
-    newsview: {
-      flexDirection: 'row',
-      padding: 10,
-      marginTop: 10,
-      borderRadius: 5,
-      width: '100%',
-      alignItems: 'flex-start',
-      backgroundColor: '#FFFFFF',
-      elevation: 2,
-    },
-    newstext: {
-      flex: 1,
-      paddingRight: 10,
-    },
-    title: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      marginBottom: 5,
-    },
-    hint: {
-      fontSize: 14,
-      color: '#666',
-    },
-    newsimageview: {
-      width: 120,
-      height: 80,
-      borderRadius: 5,
-      overflow: 'hidden',
-    },
-    separator: {
-      width: 2, 
-      height: '100%',
-      backgroundColor: '#808080', 
-    },
-    newsImage: {
-      width: '100%',
-      height: '100%',
-    },
-  });
-export default HomeScreen;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+  section: {
+    marginBottom: 24,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  item: {
+    flex: 1,
+  },
+  label: {
+    fontSize: 14,
+    color: '#555',
+  },
+  value: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  legend: {
+    marginTop: 12,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+});
 
-
+export default FinanceOverview;
